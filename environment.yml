@@ -1,0 +1,12 @@
+# Snowflake Streamlit Environment Configuration
+# Este archivo define las dependencias necesarias para ejecutar la aplicación
+# en Streamlit in Snowflake
+
+name: streamlit_rechazos
+channels:
+  - snowflake
+dependencies:
+  - python=3.9
+  - snowflake-snowpark-python
+  - pandas
+  - streamlit
