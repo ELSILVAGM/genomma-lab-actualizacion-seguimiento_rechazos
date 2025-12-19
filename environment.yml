@@ -10,3 +10,4 @@ dependencies:
   - snowflake-snowpark-python
   - pandas
   - streamlit
+  - openpyxl

@@ -125,40 +125,43 @@ def main():
 
         with st.expander("Columnas esperadas en el archivo"):
             st.markdown("""
-            El archivo CSV debe contener las siguientes columnas:
-            - **IDRechazo**: Identificador del rechazo
-            - **Caso**: Número o identificador del caso
-            - **Responsable de Caso**: Persona responsable
-            - **Valor homologación**: Valor de homologación
+            El archivo debe contener las siguientes columnas:
+
+            | Campo | Definición |
+            |-------|------------|
+            | **IDRechazo** | Identificador único del rechazo |
+            | **Caso** | Caso que indica la solución que se debe dar al rechazo |
+            | **Responsable de Caso** | Área del equipo de Ciencia de Datos que debe dar seguimiento al rechazo |
+            | **Valor Homologacion** | Valor al que se debe homologar si el campo "Caso" corresponde a: Homologacion Sucursal o Homologacion Producto |
 
             *Nota: Los nombres de las columnas deben coincidir exactamente (sin distinguir mayúsculas/minúsculas)*
 
-            **Formato aceptado:** CSV únicamente
+            **Formatos aceptados:** CSV, XLSX
             """)
 
         uploaded_file = st.file_uploader(
-            "Selecciona el archivo CSV",
+            "Selecciona el archivo (CSV o XLSX)",
             accept_multiple_files=False,
-            help="Sube un archivo CSV con los datos de rechazos. Solo se aceptan archivos en formato CSV."
+            help="Sube un archivo CSV o XLSX con los datos de rechazos."
         )
 
         if uploaded_file is not None:
             add_log(f"Archivo seleccionado: {uploaded_file.name}")
             # Validar extensión del archivo
-            if not uploaded_file.name.lower().endswith('.csv'):
+            if not (uploaded_file.name.lower().endswith('.csv') or uploaded_file.name.lower().endswith('.xlsx')):
                 add_log(f"Archivo rechazado - extensión inválida: {uploaded_file.name}", "WARNING")
                 st.error(f"❌ **Formato de archivo no válido**")
-                st.warning(f"El archivo **{uploaded_file.name}** no es un archivo CSV válido.")
-                st.info("Por favor, sube un archivo con extensión **.csv**. No se aceptan archivos Excel (.xlsx, .xls) ni otros formatos.")
+                st.warning(f"El archivo **{uploaded_file.name}** no tiene un formato válido.")
+                st.info("Por favor, sube un archivo con extensión **.csv** o **.xlsx**. No se aceptan otros formatos.")
                 return
 
             try:
                 st.info(f"Archivo cargado: {uploaded_file.name}")
-                add_log("Iniciando lectura del archivo CSV...")
+                add_log(f"Iniciando lectura del archivo {uploaded_file.name}...")
 
                 with st.spinner("Leyendo archivo..."):
                     processor = DataProcessor()
-                    df = processor.read_csv(uploaded_file)
+                    df = processor.read_file(uploaded_file)
 
                 add_log(f"Archivo leído correctamente: {len(df)} registros encontrados")
                 st.success(f"Archivo leído correctamente: {len(df)} registros encontrados")

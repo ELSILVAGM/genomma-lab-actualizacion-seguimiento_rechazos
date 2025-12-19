@@ -12,13 +12,14 @@ from datetime import datetime
 
 
 class DataProcessor:
-    """Clase para procesar y validar datos del archivo CSV"""
+    """Clase para procesar y validar datos del archivo CSV o XLSX"""
 
     COLUMN_MAPPING = {
         'IDRechazo': 'RECHAZOID',
         'Caso': 'CASO',
         'Responsable de Caso': 'RESPONSABLE_DE_CASO',
-        'Valor homologación': 'VALOR_HOMOLOGACION'
+        'Valor homologación': 'VALOR_HOMOLOGACION',
+        'Valor Homologacion': 'VALOR_HOMOLOGACION'  # Variante sin tilde
     }
 
     REQUIRED_COLUMNS = ['IDRechazo', 'Caso', 'Responsable de Caso', 'Valor homologación']
@@ -26,29 +27,46 @@ class DataProcessor:
     def __init__(self):
         pass
 
-    def read_csv(self, file) -> pd.DataFrame:
-        """Lee archivos CSV con manejo robusto de codificaciones"""
-        encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'windows-1252', 'cp1252']
+    def read_file(self, file) -> pd.DataFrame:
+        """Lee archivos CSV o XLSX con manejo robusto de codificaciones"""
+        filename = file.name.lower()
 
-        for encoding in encodings:
+        # Si es archivo Excel
+        if filename.endswith('.xlsx'):
             try:
                 if hasattr(file, 'seek'):
                     file.seek(0)
-
-                df = pd.read_csv(file, encoding=encoding)
+                df = pd.read_excel(file, engine='openpyxl')
                 df.columns = df.columns.str.strip()
                 return df
-
-            except (UnicodeDecodeError, UnicodeError):
-                continue
             except Exception as e:
-                if encoding == encodings[-1]:  # Si es el último intento
-                    raise Exception(f"Error al leer el archivo CSV: {str(e)}")
+                raise Exception(f"Error al leer el archivo XLSX: {str(e)}")
 
-        raise Exception(
-            f"No se pudo leer el archivo CSV. Se probaron las siguientes codificaciones: {', '.join(encodings)}. "
-            "Por favor, asegúrate de que el archivo esté en un formato CSV válido."
-        )
+        # Si es archivo CSV
+        elif filename.endswith('.csv'):
+            encodings = ['utf-8', 'latin-1', 'iso-8859-1', 'windows-1252', 'cp1252']
+
+            for encoding in encodings:
+                try:
+                    if hasattr(file, 'seek'):
+                        file.seek(0)
+
+                    df = pd.read_csv(file, encoding=encoding)
+                    df.columns = df.columns.str.strip()
+                    return df
+
+                except (UnicodeDecodeError, UnicodeError):
+                    continue
+                except Exception as e:
+                    if encoding == encodings[-1]:  # Si es el último intento
+                        raise Exception(f"Error al leer el archivo CSV: {str(e)}")
+
+            raise Exception(
+                f"No se pudo leer el archivo CSV. Se probaron las siguientes codificaciones: {', '.join(encodings)}. "
+                "Por favor, asegúrate de que el archivo esté en un formato CSV válido."
+            )
+        else:
+            raise Exception("Formato de archivo no soportado. Solo se aceptan archivos CSV o XLSX.")
 
     def validate_data(self, df: pd.DataFrame) -> Tuple[bool, List[str]]:
         errors = []
